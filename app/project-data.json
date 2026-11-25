@@ -1,0 +1,46 @@
+{
+  "projects": [
+    {
+      "name": "OctoDocs Sync",
+      "owner": "Mona Lisa",
+      "status": "Active",
+      "recentActivity": "Merged automated markdown link checker and updated contributor onboarding guide 2 hours ago.",
+      "priority": "High"
+    },
+    {
+      "name": "Copilot Workflow Kit",
+      "owner": "Alex Rivera",
+      "status": "In Review",
+      "recentActivity": "Opened PR #42 to add reusable agent handoff templates and schema validation.",
+      "priority": "High"
+    },
+    {
+      "name": "Pulse Telemetry CLI",
+      "owner": "Samira Chen",
+      "status": "Active",
+      "recentActivity": "Released v0.4.2 with improved JSON export and latency histograms.",
+      "priority": "Medium"
+    },
+    {
+      "name": "Design Tokens Library",
+      "owner": "Jordan Patel",
+      "status": "At Risk",
+      "recentActivity": "Flagged contrast regression on dark-mode status badges; accessibility audit scheduled.",
+      "priority": "Critical"
+    },
+    {
+      "name": "Sandbox Runner Images",
+      "owner": "Taylor Brooks",
+      "status": "Active",
+      "recentActivity": "Updated base container to Node 22 LTS and pre-cached Python 3.12 tooling.",
+      "priority": "Low"
+    },
+    {
+      "name": "Release Notes Bot",
+      "owner": "Morgan Lee",
+      "status": "Paused",
+      "recentActivity": "Waiting on webhook rate-limit metrics before enabling auto-publish on main.",
+      "priority": "Medium"
+    }
+  ]
+}

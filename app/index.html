@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="header-inner">
+        <div>
+          <p class="eyebrow">Contributor Overview</p>
+          <h1>Project Pulse</h1>
+          <p class="subtitle">
+            Track active initiatives, owners, status, recent activity, and priority levels.
+          </p>
+        </div>
+        <div class="summary-strip" aria-label="Dashboard summary">
+          <div class="summary-pill">
+            <span class="label">Total</span>
+            <span class="value" id="total-count">0</span>
+          </div>
+          <div class="summary-pill">
+            <span class="label">Active</span>
+            <span class="value" id="active-count">0</span>
+          </div>
+          <div class="summary-pill">
+            <span class="label">High / Critical</span>
+            <span class="value" id="priority-count">0</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="controls" aria-label="Filter projects by status">
+        <div class="filter-group" role="group" aria-label="Status filters">
+          <button type="button" class="filter-btn" data-filter="All" aria-pressed="true">
+            All
+          </button>
+          <button type="button" class="filter-btn" data-filter="Active" aria-pressed="false">
+            Active
+          </button>
+          <button type="button" class="filter-btn" data-filter="In Review" aria-pressed="false">
+            In Review
+          </button>
+          <button type="button" class="filter-btn" data-filter="At Risk" aria-pressed="false">
+            At Risk
+          </button>
+          <button type="button" class="filter-btn" data-filter="Paused" aria-pressed="false">
+            Paused
+          </button>
+        </div>
+      </section>
+
+      <section
+        id="dashboard"
+        class="dashboard"
+        aria-live="polite"
+        aria-label="Project cards"
+      >
+        <p class="state-message">Loading Project Pulse data...</p>
+      </section>
+    </main>
+
+    <script>
+      const dashboardEl = document.getElementById("dashboard");
+      const totalCountEl = document.getElementById("total-count");
+      const activeCountEl = document.getElementById("active-count");
+      const priorityCountEl = document.getElementById("priority-count");
+      const filterButtons = Array.from(document.querySelectorAll(".filter-btn"));
+
+      let allProjects = [];
+      let currentFilter = "All";
+
+      function slugify(value) {
+        return String(value || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+      }
+
+      function createProjectCard(project) {
+        const card = document.createElement("article");
+        card.className = "project-card";
+
+        const header = document.createElement("div");
+        header.className = "card-header";
+
+        const titleWrap = document.createElement("div");
+        const title = document.createElement("h2");
+        title.className = "project-title";
+        title.textContent = project.name || "Untitled Project";
+
+        const owner = document.createElement("p");
+        owner.className = "project-owner";
+        owner.textContent = `Owner: ${project.owner || "Unassigned"}`;
+
+        titleWrap.append(title, owner);
+
+        const statusBadge = document.createElement("span");
+        const statusValue = project.status || "Unknown";
+        statusBadge.className = `status-badge status-${slugify(statusValue)}`;
+        statusBadge.textContent = statusValue;
+
+        header.append(titleWrap, statusBadge);
+
+        const activityBox = document.createElement("div");
+        activityBox.className = "activity-box";
+
+        const activityLabel = document.createElement("span");
+        activityLabel.className = "activity-label";
+        activityLabel.textContent = "Recent Activity";
+
+        const activityText = document.createElement("span");
+        activityText.textContent = project.recentActivity || "No recent activity recorded.";
+
+        activityBox.append(activityLabel, activityText);
+
+        const footer = document.createElement("div");
+        footer.className = "card-footer";
+
+        const priorityValue = project.priority || "Medium";
+        const priorityTag = document.createElement("span");
+        priorityTag.className = `priority-tag priority-${slugify(priorityValue)}`;
+
+        const dot = document.createElement("span");
+        dot.className = "priority-dot";
+        dot.setAttribute("aria-hidden", "true");
+
+        const priorityText = document.createElement("span");
+        priorityText.textContent = `Priority: ${priorityValue}`;
+
+        priorityTag.append(dot, priorityText);
+        footer.append(priorityTag);
+
+        card.append(header, activityBox, footer);
+        return card;
+      }
+
+      function updateSummary(projects) {
+        totalCountEl.textContent = String(projects.length);
+        activeCountEl.textContent = String(
+          projects.filter((p) => String(p.status).toLowerCase() === "active").length
+        );
+        priorityCountEl.textContent = String(
+          projects.filter((p) => {
+            const level = String(p.priority).toLowerCase();
+            return level === "high" || level === "critical";
+          }).length
+        );
+      }
+
+      function renderProjects() {
+        const filtered =
+          currentFilter === "All"
+            ? allProjects
+            : allProjects.filter((p) => p.status === currentFilter);
+
+        dashboardEl.innerHTML = "";
+
+        if (filtered.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "state-message";
+          empty.textContent = "No projects match the selected status filter.";
+          dashboardEl.append(empty);
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        for (const project of filtered) {
+          fragment.append(createProjectCard(project));
+        }
+        dashboardEl.append(fragment);
+      }
+
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          currentFilter = button.dataset.filter || "All";
+          filterButtons.forEach((btn) => {
+            btn.setAttribute("aria-pressed", String(btn === button));
+          });
+          renderProjects();
+        });
+      });
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("project-data.json");
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status} while loading project-data.json`);
+          }
+          const data = await response.json();
+          allProjects = Array.isArray(data.projects) ? data.projects : [];
+          updateSummary(allProjects);
+          renderProjects();
+        } catch (error) {
+          dashboardEl.innerHTML = "";
+          const err = document.createElement("p");
+          err.className = "state-message";
+          err.textContent = `Unable to load project data: ${error.message}`;
+          dashboardEl.append(err);
+        }
+      }
+
+      loadProjects();
+    </script>
+  </body>
+</html>
